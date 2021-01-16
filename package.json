@@ -2,7 +2,6 @@
   "name": "re-meet",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
   "scripts": {
     "dev": "concurrently \"cd server && yarn dev\" \"cd web && yarn start\"",
     "setup": "yarn && concurrently \"cd server && yarn\" \"cd web && yarn\""
@@ -22,3 +21,4 @@
     "concurrently": "^5.3.0"
   }
 }
+ 

@@ -1,0 +1,16 @@
+{
+  "groups": [
+    {
+      "id": 0,
+      "name": "Team Moon Stonks",
+      "icon": "ben.jpg",
+      "members": ["steven@gmail.com", "scott@gmail.com"]
+    },
+    {
+      "id": 1,
+      "name": "Other team",
+      "icon": "ben.jpg",
+      "members": ["scott@gmail.com", "brenden@gmail.com"]
+    }
+  ]
+}
