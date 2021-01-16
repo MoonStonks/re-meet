@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "concurrently \"cd server && yarn dev\" \"cd web && yarn start\""
+    "dev": "concurrently \"cd server && yarn dev\" \"cd web && yarn start\"",
+    "setup": "concurrently \"yarn\" \"cd server && yarn\" \"cd web && yarn\""
   },
   "repository": {
     "type": "git",
