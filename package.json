@@ -1,0 +1,23 @@
+{
+  "name": "re-meet",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"cd server && yarn dev\" \"cd web && yarn start\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MoonStonks/re-meet.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/MoonStonks/re-meet/issues"
+  },
+  "homepage": "https://github.com/MoonStonks/re-meet#readme",
+  "dependencies": {
+    "concurrently": "^5.3.0"
+  }
+}
