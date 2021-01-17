@@ -153,12 +153,12 @@ const groups = [
 ];
 
 const colorMap = {
-  0: "blue",
-  1: "red",
-  2: "green",
-  3: "orange",
-  4: "yellow",
-  5: "purple",
+  0: "#285285", // greyBlue
+  1: "#ab4459", // roseRed
+  2: "green", 
+  3: "#cf7908", // orange
+  4: "#d1b64b", // sandYellow
+  5: "#9055ad", // lightPurple
 };
 
 // groups
@@ -189,6 +189,7 @@ export const CalendarPage = () => {
   const [groupID, setGroupID] = React.useState(0); // Set group
   const [calView, setCalView] = React.useState("timeGridWeek");
   const [events, setEvents] = React.useState([]);
+  const [groupMembers, setGroupMembers] = React.useState([]);
 
   const history = useHistory();
 
@@ -230,6 +231,7 @@ export const CalendarPage = () => {
   useEffect(() => {
     const processData = async () => {
       let processed = [];
+      let people = [];
 
       if (userData.groups.length) {
         const db = firebase.firestore();
@@ -242,6 +244,7 @@ export const CalendarPage = () => {
               const userRef = db.collection("profiles").doc(member);
               const res = await userRef.get();
               const userEvents = res.data().events;
+              people.push(res.data());
               userEvents.forEach((event) =>
                 processed.push({
                   start: event.start,
@@ -252,6 +255,8 @@ export const CalendarPage = () => {
               );
             })
         );
+
+        setGroupMembers(people);
       }
 
       return processed;
@@ -311,10 +316,7 @@ export const CalendarPage = () => {
         </Tooltip>
         <Divider />
         <List>
-          
-          {userData.groups.map((
-            group
-          ) => (
+          {userData.groups.map((group) => (
             <Tooltip title={group.name} arrow placement="right">
               <Button
                 onClick={() => {
@@ -324,10 +326,7 @@ export const CalendarPage = () => {
                   setJoinOrCreate(false);
                 }}
               >
-                <Avatar
-                  alt="Remy Sharp"
-                  src="https://i.imgur.com/RTE1I5f.png"
-                />
+                <Avatar alt="Remy Sharp" src={group.icon} />
               </Button>
             </Tooltip>
           ))}
@@ -418,19 +417,20 @@ export const CalendarPage = () => {
         </div>
         <Divider />
 
-        <Tooltip title="personAdd" arrow placement="left">
+        <Tooltip title="Show Invite Code" arrow placement="left">
           <IconButton
             color="inherit"
             edge="end"
             onClick={() => {
               console.log("add a person lol");
+              console.log(groupID);
             }}
           >
-            <PersonAddIcon /> <Typography>Add Member</Typography>
+            <PersonAddIcon /> <Typography>Invite Member</Typography>
           </IconButton>
         </Tooltip>
 
-        <Tooltip title="manage Group" arrow placement="left">
+        {/* <Tooltip title="manage Group" arrow placement="left">
           <IconButton
             color="inherit"
             edge="end"
@@ -440,16 +440,23 @@ export const CalendarPage = () => {
           >
             <PeopleIcon /> <Typography>Manage Group</Typography>
           </IconButton>
-        </Tooltip>
+        </Tooltip> */}
 
         <Divider />
         <List>
-          {["Ben", "Brenden", "Scott", "Steven"].map((text, index) => (
-            <ListItem button key={text}>
+          {groupMembers.map((member, index) => (
+            <ListItem button key={index}>
               <ListItemIcon>
-                <Avatar className={classes.orange}>{text}</Avatar>
+                <Avatar className={classes.orange}>
+                  <img
+                    src={member.picture}
+                    alt="member"
+                    width={40}
+                    height={40}
+                  />
+                </Avatar>
               </ListItemIcon>
-              <ListItemText primary={text} />
+              <ListItemText primary={member.name} />
             </ListItem>
           ))}
         </List>
