@@ -311,9 +311,9 @@ export const CalendarPage = () => {
         </Tooltip>
         <Divider />
         <List>
+          
           {userData.groups.map((
-            group,
-            index
+            group
           ) => (
             <Tooltip title={group.name} arrow placement="right">
               <Button
