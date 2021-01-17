@@ -82,7 +82,8 @@ export const GroupSettings = () => {
         ...data,
         groups: [...data.groups, cryptoHash],
       });
-    getData();
+    await getData();
+    setOpenCreate(false);
   };
 
   const handleJoinGroup = async () => {
@@ -96,7 +97,7 @@ export const GroupSettings = () => {
     if (groupData) {
       await db
         .collection("groups")
-        .doc(joinCode)
+        .doc(group.docs[0].id)
         .set({ ...groupData, members: [...groupData.members, email] });
       await db
         .collection("profiles")

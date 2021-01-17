@@ -58,7 +58,7 @@ const drawerWidth2 = 200;
 const useStyles = makeStyles((theme) => ({
   root: {
     display: "flex",
-    backgroundColor: "#ffffff",
+    backgroundColor: "#FFFFFF",
   },
   appBar2: {
     width: `calc(100% - ${drawerWidth}px)`,
@@ -70,9 +70,11 @@ const useStyles = makeStyles((theme) => ({
   },
   drawerPaper: {
     width: drawerWidth,
+    backgroundColor: "#a8b3cc",
   },
   drawerPaper2: {
     width: drawerWidth2,
+    backgroundColor: "#a8b3cc",
   },
   // necessary for content to be below app bar
   toolbar2: theme.mixins.toolbar,
@@ -105,9 +107,7 @@ const useStyles = makeStyles((theme) => ({
     width: drawerWidth2,
     flexShrink: 0,
   },
-  drawerPaper: {
-    width: drawerWidth,
-  },
+
   drawerHeader: {
     display: "flex",
     alignItems: "center",
@@ -242,25 +242,29 @@ export const CalendarPage = () => {
       if (userData.groups.length) {
         const db = firebase.firestore();
 
-        await Promise.all(
-          userData.groups
-            .find((group) => group.id === groupID)
-            .members.map(async (member, index) => {
-              let color = colorMap[index];
-              const userRef = db.collection("profiles").doc(member);
-              const res = await userRef.get();
-              const userEvents = res.data().events;
-              people.push(res.data());
-              userEvents.forEach((event) =>
-                processed.push({
-                  start: event.start,
-                  end: event.end,
-                  title: res.data().name,
-                  color,
-                })
-              );
-            })
-        );
+        try {
+          await Promise.all(
+            userData.groups
+              .find((group) => group.id === groupID)
+              .members.map(async (member, index) => {
+                let color = colorMap[index];
+                const userRef = db.collection("profiles").doc(member);
+                const res = await userRef.get();
+                const userEvents = res.data().events;
+                people.push(res.data());
+                userEvents.forEach((event) =>
+                  processed.push({
+                    start: event.start,
+                    end: event.end,
+                    title: res.data().name,
+                    color,
+                  })
+                );
+              })
+          );
+        } catch {
+          // do nothing
+        }
 
         setGroupMembers(people);
       }
@@ -288,7 +292,7 @@ export const CalendarPage = () => {
               ? "Settings"
               : joinOrCreate
               ? "Group Settings"
-              : "Calendar"}
+              : state.selectedGroup? `${state.selectedGroup?.name}'s Shared Calendar` : "Calendar"}
           </Typography>
           <IconButton
             color="inherit"
@@ -315,17 +319,26 @@ export const CalendarPage = () => {
         <List>
           {userData.groups.map((group) => (
             <Tooltip title={group.name} arrow placement="right">
-              <Button
-                onClick={() => {
-                  console.log(`i clicked ${group.id}`);
-                  setGroupID(group.id);
-                  dispatch({ type: "SET_SELECTED_GROUP", payload: group });
-                  setSettings(false);
-                  setJoinOrCreate(false);
+              <div
+                style={{
+                  filter:
+                    group.id === state.selectedGroup?.id
+                      ? "drop-shadow(0 0 0.25rem black)"
+                      : undefined,
                 }}
               >
-                <Avatar alt="Remy Sharp" src={group.icon} />
-              </Button>
+                <Button
+                  onClick={() => {
+                    console.log(`i clicked ${group.id}`);
+                    setGroupID(group.id);
+                    dispatch({ type: "SET_SELECTED_GROUP", payload: group });
+                    setSettings(false);
+                    setJoinOrCreate(false);
+                  }}
+                >
+                  <Avatar alt={group.icon} src={group.icon} />
+                </Button>
+              </div>
             </Tooltip>
           ))}
         </List>
@@ -385,7 +398,6 @@ export const CalendarPage = () => {
                   <MenuItem value={"dayGridMonth"}>Monthly Summary</MenuItem>
                 </Select>
               </FormControl>
-              <Button onClick={refreshData}>Refresh Data</Button>
             </span>
           )}
           {/* </Grid>

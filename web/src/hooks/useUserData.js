@@ -16,13 +16,20 @@ export const useUserData = () => {
     let result;
     if (groups.length) {
       const groupResult = await groupRef.get();
+      let set = new Set();
       result = groupResult.docs
         .map((elem) => elem.data())
-        .filter((group) => groups.includes(group.id));
+        .filter((group) => {
+          if (!set.has(group.id) && groups.includes(group.id)) {
+            set.add(group.id);
+            return true;
+          } else {
+            return false;
+          }
+        });
     } else {
       result = [];
     }
-    console.log(result);
     dispatch({
       type: "SET_USER",
       payload: { name, email, events, groups: result, picture },
