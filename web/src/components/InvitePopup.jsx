@@ -33,8 +33,9 @@ export default function InvitePopup({ inviteId }) {
         variant="contained"
         color="primary"
         onClick={handleClick}
+        style={{ width: 165 }}
       >
-        Get Invite Code
+        Generate Invite
       </Button>
       <Popover
         id={id}

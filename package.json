@@ -4,7 +4,9 @@
   "description": "",
   "scripts": {
     "dev": "concurrently \"cd web && yarn start\"",
-    "setup": "yarn && concurrently \"cd web && yarn\""
+    "setup": "yarn && concurrently \"cd web && yarn\"",
+    "start": "cd server && yarn start",
+    "heroku-postbuild": "cd web && yarn install --network-timeout 100000 && yarn build && cd ../server && yarn install --network-timeout 100000"
   },
   "repository": {
     "type": "git",
@@ -21,4 +23,3 @@
     "concurrently": "^5.3.0"
   }
 }
- 

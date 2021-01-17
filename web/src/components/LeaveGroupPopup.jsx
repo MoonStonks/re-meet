@@ -74,17 +74,17 @@ export default function LeaveGroupPopup({ leaveGroup, leaveGroupName }) {
         aria-describedby={id}
         variant="contained"
         color="primary"
-        style={{ width: 175, marginBottom: 10 }}
+        style={{ width: 165, marginBottom: 10 }}
         onClick={handleClick}
       >
-        Manage Groups
+        Manage Group
       </Button>
       <Divider />
       <Button
         onClick={refreshData}
         variant="contained"
         color="primary"
-        style={{ width: 150 }}
+        style={{ width: 165, marginBottom: 10 }}
       >
         Refresh Data
       </Button>
