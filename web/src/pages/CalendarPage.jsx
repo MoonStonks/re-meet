@@ -1,10 +1,18 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Grid from "@material-ui/core/Grid/Grid";
 import { Card, IconButton, Typography, Button } from "@material-ui/core";
 import styled from "styled-components";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
+import firebase from "../firebase/firebase";
+
+import PowerSettingsNewIcon from "@material-ui/icons/PowerSettingsNew";
+import HomeIcon from "@material-ui/icons/Home";
+import SettingsIcon from "@material-ui/icons/Settings";
+import AddCircleOutlineIcon from "@material-ui/icons/AddCircleOutline";
+import PersonAddIcon from "@material-ui/icons/PersonAdd";
+import PeopleIcon from "@material-ui/icons/People";
 
 import Drawer from "@material-ui/core/Drawer";
 import CssBaseline from "@material-ui/core/CssBaseline";
@@ -21,18 +29,31 @@ import MenuIcon from "@material-ui/icons/Menu";
 import Tooltip from "@material-ui/core/Tooltip";
 import clsx from "clsx";
 
+import { deepOrange, deepPurple } from "@material-ui/core/colors";
+
+import InputLabel from "@material-ui/core/InputLabel";
+import MenuItem from "@material-ui/core/MenuItem";
+import FormHelperText from "@material-ui/core/FormHelperText";
+import FormControl from "@material-ui/core/FormControl";
+import Select from "@material-ui/core/Select";
+import Avatar from "@material-ui/core/Avatar";
+
 import { makeStyles, useTheme } from "@material-ui/core/styles";
 import ChevronLeftIcon from "@material-ui/icons/ChevronLeft";
 import ChevronRightIcon from "@material-ui/icons/ChevronRight";
 
+import { GroupSettings } from "../components/GroupSettings";
 import { Settings } from "../components/Settings";
+import { useHistory } from "react-router-dom";
+import { useUserData } from "../hooks/useUserData";
 
-const drawerWidth = 50;
+const drawerWidth = 70;
 const drawerWidth2 = 200;
 
 const useStyles = makeStyles((theme) => ({
   root: {
     display: "flex",
+    backgroundColor: "white",
   },
   appBar2: {
     width: `calc(100% - ${drawerWidth}px)`,
@@ -106,29 +127,83 @@ const useStyles = makeStyles((theme) => ({
     }),
     // marginRight: -drawerWidth,
   },
+  orange: {
+    color: theme.palette.getContrastText(deepOrange[500]),
+    backgroundColor: deepOrange[500],
+  },
+  purple: {
+    color: theme.palette.getContrastText(deepPurple[500]),
+    backgroundColor: deepPurple[500],
+  },
 }));
 
 const groups = [
-    {
-      "id": 0,
-      "name": "Team Moon Stonks",
-      "icon": "ben.jpg",
-      "members": ["steven@gmail.com", "scott@gmail.com"]
-    },
-    {
-      "id": 1,
-      "name": "Other team",
-      "icon": "ben.jpg",
-      "members": ["scott@gmail.com", "brenden@gmail.com"]
-    }
-  ];
+  {
+    id: 12,
+    name: "Team Moon Stonks",
+    icon: "ben.jpg",
+    members: ["steven@gmail.com", "scott@gmail.com"],
+  },
+  {
+    id: 34,
+    name: "Other team",
+    icon: "ben.jpg",
+    members: ["scott@gmail.com", "brenden@gmail.com"],
+  },
+];
+
+const colorMap = {
+  0: "blue",
+  1: "red",
+  2: "green",
+  3: "orange",
+  4: "yellow",
+  5: "purple",
+};
+
+// groups
+//   .find((group) => group.id === groupId)
+//   .members.reduce(async (result, member, index) => {
+//     let color = colorMap[index];
+//     const events = await db.get(member.events);
+//     const processed = events.map((event) => ({
+//       start: event.start,
+//       end: event.end,
+//       title: member.name,
+//       color,
+//     }));
+//     return [...result, ...processed];
+//   }, []);
 
 export const CalendarPage = () => {
+  /**
+   * To access events: userData.events,
+   * To access groups: userData.groups
+   */
+  const userData = useUserData();
+
   const theme = useTheme();
   const [open, setOpen] = React.useState(false);
   const [settings, setSettings] = React.useState(false); // this is react hook for brenden
-  // const [group, setGroup] = React.useState(""); // Set group
+  const [joinOrCreate, setJoinOrCreate] = React.useState(false); // this is react hook for brenden
+  const [groupID, setGroupID] = React.useState(0); // Set group
+  const [calView, setCalView] = React.useState("timeGridWeek");
+  const [events, setEvents] = React.useState([]);
+
+  const history = useHistory();
+
   const classes = useStyles();
+
+  let calendarRef = React.useRef();
+
+  const handleCalViewChange = (event) => {
+    setCalView(event.target.value);
+  };
+
+  useEffect(() => {
+    let calendarApi = calendarRef.current.getApi();
+    calendarApi.changeView(calView);
+  }, [calView]);
 
   const handleDrawerOpen = () => {
     setOpen(true);
@@ -137,6 +212,60 @@ export const CalendarPage = () => {
   const handleDrawerClose = () => {
     setOpen(false);
   };
+
+  const handleLogout = () => {
+    firebase
+      .auth()
+      .signOut()
+      .then(() => history.push("/"))
+      .catch((err) => console.log(err));
+  };
+
+  useEffect(() => {
+    if (userData.groups.length) {
+      setGroupID(userData.groups[0].id);
+    }
+  }, [userData]);
+
+  useEffect(() => {
+    const processData = async () => {
+      if (userData.groups.length) {
+        const db = firebase.firestore();
+
+        const results = await userData.groups
+          .find((group) => group.id === groupID)
+          .members.forEach(async (member, index) => {
+            let color = colorMap[index];
+            const userRef = db.collection("profiles").doc(member);
+            const res = await userRef.get();
+            const userEvents = res.data().events;
+            const processed = userEvents.map((event) => ({
+              start: event.start,
+              end: event.end,
+              title: res.data().name,
+              color,
+            }));
+            return processed;
+          });
+
+        return results;
+      } else {
+        return [];
+      }
+    };
+
+    if (groupID) {
+      (async () => {
+        const res = await processData();
+        setEvents([...events, ...res])
+      })();
+    }
+  }, [groupID, userData]);
+
+  useEffect(() => {
+    console.log(events);
+  }, [events]);
+
   return (
     <div className={classes.root}>
       <CssBaseline />
@@ -148,7 +277,7 @@ export const CalendarPage = () => {
       >
         <Toolbar>
           <Typography variant="h6" noWrap className={classes.title}>
-            Shared Calendar
+            {settings ? "Settings" : "Calendar"}
           </Typography>
           <IconButton
             color="inherit"
@@ -164,6 +293,7 @@ export const CalendarPage = () => {
       <Drawer
         className={classes.drawer2}
         variant="permanent"
+        style={{ width: drawerWidth }}
         classes={{
           paper: classes.drawerPaper,
         }}
@@ -171,29 +301,54 @@ export const CalendarPage = () => {
       >
         <div className={classes.toolbar2} />
         <Divider />
+        <Tooltip title="User Settings" arrow placement="right">
+          <Button
+            onClick={() => {
+              console.log(`i clicked on user settings`);
+              // setGroup("settings");
+              setSettings(true);
+              setJoinOrCreate(false);
+            }}
+          >
+            <HomeIcon fontSize="large" />
+          </Button>
+        </Tooltip>
+        <Divider />
         <List>
-          {["A", "B", "C"].map((text, index, {name}) => (
-            <Tooltip title = {text}  arrow placement="right"><ListItem button key={text} >
-              <ListItemIcon>
-                <InboxIcon /> 
-                {/* 
-onClick={()=> console.log(`group ${name}`)
-                 */}
-              </ListItemIcon>
-            </ListItem></Tooltip>
+          {groups.map((
+            text,
+            index // replace groups with userData.groups
+          ) => (
+            <Tooltip title={text.name} arrow placement="right">
+              <Button
+                onClick={() => {
+                  console.log(`i clicked ${text.id}`);
+                  setGroupID(text.id);
+                  setSettings(false);
+                  setJoinOrCreate(false);
+                }}
+              >
+                <Avatar
+                  alt="Remy Sharp"
+                  src="https://i.imgur.com/RTE1I5f.png"
+                />
+              </Button>
+            </Tooltip>
           ))}
         </List>
         <Divider />
-        <List>
-          {["+"].map((text, index) => (
-            <ListItem button key={text}>
-              <ListItemIcon>
-                {index % 2 === 0 ? <InboxIcon /> : <MailIcon />}
-              </ListItemIcon>
-              <ListItemText primary={text} />
-            </ListItem>
-          ))}
-        </List>
+        <Tooltip title="Add New Group" arrow placement="right">
+          <Button
+            onClick={() => {
+              console.log(`i clicked on add a new group button`);
+              // setGroup("settings");
+              setSettings(false); // add a new group button and set settings in this onClick method
+              setJoinOrCreate(true);
+            }}
+          >
+            <AddCircleOutlineIcon fontSize="large" />
+          </Button>
+        </Tooltip>
       </Drawer>
       <main
         className={clsx(classes.content, {
@@ -204,23 +359,42 @@ onClick={()=> console.log(`group ${name}`)
 
         <div>
           <Grid container>
-            <Grid item xs={8}>
-              <Card styles={{ height: "500px", backgroundColor: "red" }}>
-                <Typography>Calendar</Typography>
-              </Card>
+            <Grid item xs={7}>
+              <Typography>Calendar</Typography>
             </Grid>
-            <Grid item xs={3}>
-              <Card styles={{ height: "500px", backgroundColor: "green" }}>
-                <Typography>Members</Typography>
-              </Card>
+            <Grid item xs={5} direction="row">
+              {!settings && !joinOrCreate && (
+                <span>
+                  <FormControl variant="standard">
+                    <InputLabel htmlFor="filled-age-native-simple">
+                      Set View
+                    </InputLabel>
+                    <Select
+                      id="calViewSelect"
+                      value={calView}
+                      onChange={handleCalViewChange}
+                    >
+                      <MenuItem value={"timeGridWeek"}>Time Grid Week</MenuItem>
+                      <MenuItem value={"dayGridMonth"}>Day Grid Month</MenuItem>
+                      <MenuItem value={"dayGridWeek"}>Day Grid Week</MenuItem>
+                    </Select>
+                  </FormControl>
+                </span>
+              )}
             </Grid>
           </Grid>
-          {settings ? (
-            <Settings />
+          {settings || joinOrCreate ? (
+            settings ? (
+              <Settings />
+            ) : (
+              <GroupSettings />
+            )
           ) : (
             <FullCalendar
-              plugins={[timeGridPlugin]}
-              initialView="timeGridWeek"
+              ref={calendarRef}
+              plugins={[timeGridPlugin, dayGridPlugin]}
+              initialView={calView} // dayGridMonth, dayGridWeek, timeGridWeek
+              nowIndicator={true}
               weekends={true}
               // events= 'https://fullcalendar.io/demo-events.json'
               events={[
@@ -272,31 +446,62 @@ onClick={()=> console.log(`group ${name}`)
           </IconButton>
         </div>
         <Divider />
-          <ListItem>
-          <ListItemIcon>
-                {<MailIcon />}
-              </ListItemIcon>
-              <ListItemText primary={'Add members'} />
-          </ListItem>
+          
+  
+        <Tooltip title="personAdd" arrow placement="left">
+          <IconButton
+            color="inherit"
+            edge="end"
+            onClick={() => {
+              console.log("add a person lol");
+            }}
+          >
+            <PersonAddIcon /> <Typography>Add Member</Typography>
+          </IconButton>
+        </Tooltip>
+
+        <Tooltip title="manage Group" arrow placement="left">
+          <IconButton
+            color="inherit"
+            edge="end"
+            onClick={() => {
+              console.log("manageGroup");
+            }}
+          >
+            <PeopleIcon /> <Typography>Manage Group</Typography>
+          </IconButton>
+        </Tooltip>
+
         <Divider />
         <List>
           {["Ben", "Brenden", "Scott", "Steven"].map((text, index) => (
             <ListItem button key={text}>
               <ListItemIcon>
-                {index % 2 === 0 ? <InboxIcon /> : <MailIcon />}
+                <Avatar className={classes.orange}>{text}</Avatar>
               </ListItemIcon>
               <ListItemText primary={text} />
             </ListItem>
           ))}
         </List>
         <Divider />
-      
-        <Grid container> 
-          <Grid item direction='row'>
-        <MailIcon/> 
-          </Grid> 
-          <Grid item direction='row'> <Typography>Name #1234</Typography>
-          </Grid> </Grid>
+        <Grid container>
+          <Grid item direction="row">
+            <Avatar alt="Remy Sharp" src="https://i.imgur.com/OKDYTzw.png" />
+          </Grid>
+          <Grid item direction="row">
+            {" "}
+            <Typography>Name #1234</Typography>
+            <Grid item direction="row">
+              {" "}
+              <SettingsIcon />{" "}
+              <Tooltip title="Logout" arrow placement="top">
+                <IconButton color="inherit" edge="end" onClick={handleLogout}>
+                  <PowerSettingsNewIcon />
+                </IconButton>
+              </Tooltip>
+            </Grid>
+          </Grid>{" "}
+        </Grid>
       </Drawer>
     </div>
   );

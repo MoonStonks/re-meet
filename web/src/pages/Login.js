@@ -2,10 +2,13 @@ import React, { useEffect, useState } from "react";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import firebase from "../firebase/firebase";
 import googleLogin from "../assets/btn_google_signin_dark_normal_web@2x.png";
+import { useHistory } from "react-router-dom";
 
 export const Login = () => {
   const [loading, setLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const history = useHistory();
+
   const gapi = window.gapi;
   /* 
     Update with your own Client Id and Api key 
@@ -74,7 +77,6 @@ export const Login = () => {
         orderBy: "startTime",
       });
       const events = response.result.items;
-      console.log(events);
       if (events.length) {
         profileDetails.events = events.map((event) => ({
           start: event.start.dateTime ?? event.start.date,
@@ -83,8 +85,11 @@ export const Login = () => {
       } else {
         profileDetails.events = [];
       }
-      console.log(profileDetails);
-      return db.collection("profiles").doc(profile.email).set(profileDetails);
+      return db
+        .collection("profiles")
+        .doc(profile.email)
+        .set(profileDetails)
+        .then(() => history.push("/calendar"));
     });
   };
 
