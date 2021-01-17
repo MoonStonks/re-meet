@@ -13,6 +13,7 @@ import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
 import Link from '@material-ui/core/Link';
+import Divider from '@material-ui/core/Divider';
 
 const useStyles = makeStyles((theme) => ({
   icon: {
@@ -51,6 +52,10 @@ const cards = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 export const GroupSettings = () => {
   const classes = useStyles();
 
+  function openCreateGroup() {
+    window.open();
+  }
+
   return (
     <React.Fragment>
       <CssBaseline />
@@ -67,7 +72,7 @@ export const GroupSettings = () => {
             <div className={classes.heroButtons}>
               <Grid container spacing={2} justify="center">
                 <Grid item>
-                  <Button variant="contained" color="primary">
+                  <Button variant="contained" color="primary" onClick={openCreateGroup}>
                     Create Group
                   </Button>
                 </Grid>
@@ -76,6 +81,7 @@ export const GroupSettings = () => {
           </Container>
         </div>
       </main>
+      <Divider variant="middle" />
       {/* Footer */}
       <footer className={classes.footer}>
         <Typography variant="h6" align="center" gutterBottom>

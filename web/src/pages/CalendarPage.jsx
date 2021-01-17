@@ -229,42 +229,38 @@ export const CalendarPage = () => {
 
   useEffect(() => {
     const processData = async () => {
+      let processed = [];
+
       if (userData.groups.length) {
         const db = firebase.firestore();
 
-        const results = await userData.groups
-          .find((group) => group.id === groupID)
-          .members.forEach(async (member, index) => {
-            let color = colorMap[index];
-            const userRef = db.collection("profiles").doc(member);
-            const res = await userRef.get();
-            const userEvents = res.data().events;
-            const processed = userEvents.map((event) => ({
-              start: event.start,
-              end: event.end,
-              title: res.data().name,
-              color,
-            }));
-            return processed;
-          });
-
-        return results;
-      } else {
-        return [];
+        await Promise.all(
+          userData.groups
+            .find((group) => group.id === groupID)
+            .members.map(async (member, index) => {
+              let color = colorMap[index];
+              const userRef = db.collection("profiles").doc(member);
+              const res = await userRef.get();
+              const userEvents = res.data().events;
+              userEvents.forEach((event) =>
+                processed.push({
+                  start: event.start,
+                  end: event.end,
+                  title: res.data().name,
+                  color,
+                })
+              );
+            })
+        );
       }
+
+      return processed;
     };
 
     if (groupID) {
-      (async () => {
-        const res = await processData();
-        setEvents([...events, ...res])
-      })();
+      processData().then((res) => setEvents(res));
     }
   }, [groupID, userData]);
-
-  useEffect(() => {
-    console.log(events);
-  }, [events]);
 
   return (
     <div className={classes.root}>
@@ -315,15 +311,15 @@ export const CalendarPage = () => {
         </Tooltip>
         <Divider />
         <List>
-          {groups.map((
-            text,
-            index // replace groups with userData.groups
+          {userData.groups.map((
+            group,
+            index
           ) => (
-            <Tooltip title={text.name} arrow placement="right">
+            <Tooltip title={group.name} arrow placement="right">
               <Button
                 onClick={() => {
-                  console.log(`i clicked ${text.id}`);
-                  setGroupID(text.id);
+                  console.log(`i clicked ${group.id}`);
+                  setGroupID(group.id);
                   setSettings(false);
                   setJoinOrCreate(false);
                 }}
@@ -397,32 +393,7 @@ export const CalendarPage = () => {
               nowIndicator={true}
               weekends={true}
               // events= 'https://fullcalendar.io/demo-events.json'
-              events={[
-                {
-                  title: "Steven",
-                  start: "2021-01-15T08:00:00.000",
-                  end: "2021-01-15T12:00:00.000",
-                  backgroundColor: "red",
-                },
-                {
-                  title: "Ben",
-                  start: "2021-01-15T08:00:00.000",
-                  end: "2021-01-15T11:00:00.000",
-                  backgroundColor: "blue",
-                },
-                {
-                  title: "Scott",
-                  start: "2021-01-15T01:00:00.000",
-                  end: "2021-01-15T15:00:00.000",
-                  backgroundColor: "green",
-                },
-                {
-                  title: "Brenden",
-                  start: "2021-01-15T08:00:00.000",
-                  end: "2021-01-15T16:00:00.000",
-                  backgroundColor: "orange",
-                },
-              ]}
+              events={events}
             />
           )}
         </div>
@@ -446,8 +417,7 @@ export const CalendarPage = () => {
           </IconButton>
         </div>
         <Divider />
-          
-  
+
         <Tooltip title="personAdd" arrow placement="left">
           <IconButton
             color="inherit"
