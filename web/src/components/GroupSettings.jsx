@@ -14,7 +14,6 @@ import DialogContentText from "@material-ui/core/DialogContentText";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import cryptoRandomString from "crypto-random-string";
 import firebase from "../firebase/firebase";
-import { UserContext } from "../context/UserContext";
 import { useUserData } from "../hooks/useUserData";
 
 const useStyles = makeStyles((theme) => ({
@@ -64,7 +63,7 @@ export const GroupSettings = () => {
   };
 
   const handleCreateGroup = async () => {
-    const cryptoHash = cryptoRandomString({ length: 10, type: "base64" });
+    const cryptoHash = cryptoRandomString({ length: 10, type: "alphanumeric" });
     setHash(cryptoHash);
     const { email } = firebase.auth().currentUser;
     const db = firebase.firestore();
@@ -91,8 +90,9 @@ export const GroupSettings = () => {
     const db = firebase.firestore();
     const user = await db.collection("profiles").doc(email).get();
     const userData = user.data();
-    const group = await db.collection("groups").doc(joinCode).get();
-    const groupData = group.data();
+    const groupRef = db.collection("groups");
+    const group = await groupRef.where("id", "==", joinCode).get();
+    const groupData = group.docs[0].data();
     if (groupData) {
       await db
         .collection("groups")
@@ -107,8 +107,9 @@ export const GroupSettings = () => {
         });
       getData();
     } else {
-      alert("Group doesn't exist!");
+      console.log("Group doesn't exist!");
     }
+    setOpenJoin(false);
   };
 
   const handleCloseCreate = () => {

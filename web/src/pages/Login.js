@@ -4,21 +4,22 @@ import firebase from "../firebase/firebase";
 import googleLogin from "../assets/btn_google_signin_dark_normal_web@2x.png";
 import { useHistory } from "react-router-dom";
 
+/* 
+    Update with your own Client Id and Api key 
+  */
+export const CLIENT_ID = process.env.REACT_APP_CLIENT_ID;
+export const API_KEY = process.env.REACT_APP_API_KEY;
+export const DISCOVERY_DOCS = [
+  "https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest",
+];
+export const SCOPES = "https://www.googleapis.com/auth/calendar.events";
+
 export const Login = () => {
   const [loading, setLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const history = useHistory();
 
   const gapi = window.gapi;
-  /* 
-    Update with your own Client Id and Api key 
-  */
-  const CLIENT_ID = process.env.REACT_APP_CLIENT_ID;
-  const API_KEY = process.env.REACT_APP_API_KEY;
-  const DISCOVERY_DOCS = [
-    "https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest",
-  ];
-  const SCOPES = "https://www.googleapis.com/auth/calendar.events";
 
   useEffect(() => {
     firebase.auth().onAuthStateChanged((user) => {
@@ -73,7 +74,6 @@ export const Login = () => {
         timeMin: new Date().toISOString(),
         showDeleted: false,
         singleEvents: true,
-        maxResults: 10,
         orderBy: "startTime",
       });
       const events = response.result.items;

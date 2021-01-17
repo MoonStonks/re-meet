@@ -39,15 +39,15 @@ export default function InvitePopup({ inviteId }) {
       <Popover
         id={id}
         open={open}
-        anchorEl={anchorEl}
         onClose={handleClose}
+        anchorEl={anchorEl}
         anchorOrigin={{
-          vertical: "bottom",
-          horizontal: "center",
+          vertical: 'bottom',
+          horizontal: 'center',
         }}
         transformOrigin={{
-          vertical: "top",
-          horizontal: "center",
+          vertical: 'top',
+          horizontal: 'center',
         }}
       >
         <Typography className={classes.typography}>

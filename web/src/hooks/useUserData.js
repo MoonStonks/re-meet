@@ -1,16 +1,10 @@
 import { useContext, useEffect } from "react";
 import { UserContext } from "../context/UserContext";
 import firebase from "../firebase/firebase";
+import { CLIENT_ID, API_KEY, DISCOVERY_DOCS, SCOPES } from "../pages/Login";
 
 export const useUserData = () => {
   const [state, dispatch] = useContext(UserContext);
-  // const [userData, setUserData] = useState({
-  //   name: "",
-  //   email: "",
-  //   events: [],
-  //   groups: [],
-  //   picture: "",
-  // });
 
   const getData = async () => {
     const db = firebase.firestore();
@@ -28,10 +22,53 @@ export const useUserData = () => {
     } else {
       result = [];
     }
+    console.log(result);
     dispatch({
       type: "SET_USER",
       payload: { name, email, events, groups: result, picture },
     });
+    if (!state.selectedGroup) {
+      dispatch({
+        type: "SET_SELECTED_GROUP",
+        payload: result[0],
+      });
+    }
+  };
+
+  const refreshData = async () => {
+    const db = firebase.firestore();
+    const { email } = firebase.auth().currentUser;
+    const userRef = db.collection("profiles").doc(email);
+    const raw = await userRef.get();
+    const profileData = raw.data();
+
+    const gapi = window.gapi;
+    await gapi.client.init({
+      apiKey: API_KEY,
+      clientId: CLIENT_ID,
+      discoveryDocs: DISCOVERY_DOCS,
+      scope: SCOPES,
+    });
+    await gapi.client.load("calendar", "v3", () => console.log("bam!"));
+    const response = await gapi.client.calendar.events.list({
+      calendarId: "primary",
+      timeMin: new Date().toISOString(),
+      showDeleted: false,
+      singleEvents: true,
+      orderBy: "startTime",
+    });
+    const events = response.result.items;
+    if (events.length) {
+      profileData.events = events.map((event) => ({
+        start: event.start.dateTime ?? event.start.date,
+        end: event.end.dateTime ?? event.end.date,
+      }));
+    } else {
+      profileData.events = [];
+    }
+
+    await db.collection("profiles").doc(email).set(profileData);
+    await getData();
   };
 
   useEffect(() => {
@@ -42,5 +79,5 @@ export const useUserData = () => {
     });
   }, []);
 
-  return { userData: state.currentUser, getData };
+  return { userData: state.currentUser, getData, refreshData };
 };

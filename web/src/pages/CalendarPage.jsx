@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import Grid from "@material-ui/core/Grid/Grid";
 import { Card, IconButton, Typography, Button } from "@material-ui/core";
-import styled from "styled-components";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
@@ -45,11 +44,13 @@ import { GroupSettings } from "../components/GroupSettings";
 import { Settings } from "../components/Settings";
 import { useHistory } from "react-router-dom";
 import { useUserData } from "../hooks/useUserData";
+import { useWindowDimensions } from "../hooks/useWindowDimensions";
 
 import InvitePopup from "../components/InvitePopup";
-
+import LeaveGroupPopup from "../components/LeaveGroupPopup";
 import { CopyToClipboard } from "react-copy-to-clipboard";
 import copy from "copy-to-clipboard";
+import { UserContext } from "../context/UserContext";
 
 const drawerWidth = 70;
 const drawerWidth2 = 200;
@@ -184,7 +185,9 @@ export const CalendarPage = () => {
    * To access events: userData.events,
    * To access groups: userData.groups
    */
-  const { userData } = useUserData();
+  const { userData, refreshData } = useUserData();
+  const [state, dispatch] = useContext(UserContext);
+  const { height } = useWindowDimensions();
   const theme = useTheme();
   const [open, setOpen] = React.useState(false);
   const [settings, setSettings] = React.useState(false); // this is react hook for brenden
@@ -316,6 +319,7 @@ export const CalendarPage = () => {
                 onClick={() => {
                   console.log(`i clicked ${group.id}`);
                   setGroupID(group.id);
+                  dispatch({ type: "SET_SELECTED_GROUP", payload: group });
                   setSettings(false);
                   setJoinOrCreate(false);
                 }}
@@ -376,11 +380,12 @@ export const CalendarPage = () => {
                   value={calView}
                   onChange={handleCalViewChange}
                 >
-                  <MenuItem value={"timeGridWeek"}>Time Grid Week</MenuItem>
-                  <MenuItem value={"dayGridMonth"}>Day Grid Month</MenuItem>
-                  <MenuItem value={"dayGridWeek"}>Day Grid Week</MenuItem>
+                  <MenuItem value={"timeGridWeek"}>Shared Weekly</MenuItem>
+                  <MenuItem value={"timeGridDay"}>Shared Daily</MenuItem>
+                  <MenuItem value={"dayGridMonth"}>Monthly Summary</MenuItem>
                 </Select>
               </FormControl>
+              <Button onClick={refreshData}>Refresh Data</Button>
             </span>
           )}
           {/* </Grid>
@@ -401,6 +406,7 @@ export const CalendarPage = () => {
               plugins={[timeGridPlugin, dayGridPlugin]}
               initialView={calView} // dayGridMonth, dayGridWeek, timeGridWeek
               nowIndicator={true}
+              height={height - 170}
               weekends={true}
               // events= 'https://fullcalendar.io/demo-events.json'
               events={events}
@@ -433,6 +439,10 @@ export const CalendarPage = () => {
           // onClick={copy({ groupID })}
         />
         <Divider style={{ marginBottom: 10 }} />
+        <LeaveGroupPopup
+          leaveGroup={groupID}
+          leaveGroupName={state.selectedGroup?.name ?? ""}
+        />
         <Divider />
         <List>
           {groupMembers.map((member, index) => (
