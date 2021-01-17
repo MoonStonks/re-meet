@@ -63,16 +63,26 @@ function Details(props) {
             justifyContent: "center",
           }}
         >
-          <CardContent>
-            <Typography variant="h6" gutterBottom>
+          <CardContent style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+          }}>
+            <Typography variant="h6" gutterBottom style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+          }}>
               Account
             </Typography>
             <Avatar
-              alt="Lucy Lavender"
-              src={"https://i.imgur.com/mHCDTjW.png"}
+              alt={props.name}
+              src={props.userAvatar}
               style={{ width: 100, height: 100 }}
             />
-            <Spacer mb={4} />
+            <Spacer mb={2} />
 
             <Typography variant="body2" component="div" gutterBottom>
               <Box fontWeight="fontWeightMedium">
@@ -106,45 +116,34 @@ function Personal(props) {
           Information
         </Typography>
 
-        <Grid container spacing={6}>
-          <Grid item md={6}>
-            <FormControl fullWidth mb={3}>
-              <InputLabel htmlFor="name">First name</InputLabel>
-              <Input
-                id="name"
-                value={props.firstName}
-                placeholder="First Name"
-              />
-            </FormControl>
-          </Grid>
-          <Grid item md={6}>
-            <FormControl fullWidth mb={3}>
-              <InputLabel htmlFor="name">Last name</InputLabel>
-              <Input id="name" value={props.lastName} placeholder="Last name" />
-            </FormControl>
-          </Grid>
-        </Grid>
+        <FormControl fullWidth mb={3}>
+          <InputLabel htmlFor="name">Name</InputLabel>
+          <Input
+            id="name"
+            value={props.name}
+            placeholder="Name"
+          />
+          </FormControl>
         <Spacer mb={2} />
         <FormControl fullWidth mb={3}>
           <InputLabel htmlFor="email">Email</InputLabel>
           <Input
             id="email"
-            type="email"
             value={props.email}
             placeholder="Email"
           />
         </FormControl>
-        <Spacer mb={6} />
-        <Button variant="contained" color="primary" onClick={handleClick}>
+        <Spacer mb={2} />
+        {/* <Button variant="contained" color="primary" onClick={handleClick}>
           Save changes
-        </Button>
+        </Button> */}
       </CardContent>
     </Card>
   );
 }
 
 function Theme(props) {
-  const [value, setValue] = React.useState("female");
+  const [value, setValue] = React.useState("light theme");
 
   const handleChange = (event) => {
     setValue(event.target.value);
@@ -172,9 +171,9 @@ function Theme(props) {
               />
               <FormControlLabel
                 value="dark theme"
-                control={<Radio 
-                    color="primary" />}
+                control={<Radio color="primary" />}
                 label="Dark"
+                disabled={true}
               />
             </RadioGroup>
           </FormControl>
@@ -184,7 +183,7 @@ function Theme(props) {
   );
 }
 
-export const Settings = () => {
+export const Settings = (props) => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -195,17 +194,19 @@ export const Settings = () => {
       <Grid container spacing={6}>
         <Grid item xs={12} lg={12} xl={3}>
           <Details
-            firstName={firstName}
+            firstName={props.name}
             lastName={lastName}
-            email={email}
+            email={props.email}
             picture={picture}
+            userAvatar={props.userAvatar}
           />
         </Grid>
         <Grid item xs={12} xl={9}>
           <Personal
+            name={props.name}
             firstName={firstName}
             lastName={lastName}
-            email={email}
+            email={props.email}
             onChangeFirstName={setFirstName}
             onChangeLastName={setLastName}
             onChangeEmail={setEmail}

@@ -1,11 +1,16 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect } from "react";
+import { UserContext } from "../context/UserContext";
 import firebase from "../firebase/firebase";
 
 export const useUserData = () => {
-  const [userData, setUserData] = useState({
-    events: [],
-    groups: [],
-  });
+  const [state, dispatch] = useContext(UserContext);
+  // const [userData, setUserData] = useState({
+  //   name: "",
+  //   email: "",
+  //   events: [],
+  //   groups: [],
+  //   picture: "",
+  // });
 
   const getData = async () => {
     const db = firebase.firestore();
@@ -13,7 +18,7 @@ export const useUserData = () => {
     const userRef = db.collection("profiles").doc(email);
     const groupRef = db.collection("groups");
     const doc = await userRef.get();
-    const { events, groups } = doc.data();
+    const { events, groups, name, picture } = doc.data();
     let result;
     if (groups.length) {
       const groupResult = await groupRef.get();
@@ -23,7 +28,10 @@ export const useUserData = () => {
     } else {
       result = [];
     }
-    setUserData({ events, groups: result });
+    dispatch({
+      type: "SET_USER",
+      payload: { name, email, events, groups: result, picture },
+    });
   };
 
   useEffect(() => {
@@ -34,5 +42,5 @@ export const useUserData = () => {
     });
   }, []);
 
-  return userData;
+  return { userData: state.currentUser, getData };
 };

@@ -8,7 +8,6 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import firebase from "../firebase/firebase";
 
 import PowerSettingsNewIcon from "@material-ui/icons/PowerSettingsNew";
-import HomeIcon from "@material-ui/icons/Home";
 import SettingsIcon from "@material-ui/icons/Settings";
 import AddCircleOutlineIcon from "@material-ui/icons/AddCircleOutline";
 import PersonAddIcon from "@material-ui/icons/PersonAdd";
@@ -47,13 +46,18 @@ import { Settings } from "../components/Settings";
 import { useHistory } from "react-router-dom";
 import { useUserData } from "../hooks/useUserData";
 
+import InvitePopup from "../components/InvitePopup";
+
+import { CopyToClipboard } from "react-copy-to-clipboard";
+import copy from "copy-to-clipboard";
+
 const drawerWidth = 70;
 const drawerWidth2 = 200;
 
 const useStyles = makeStyles((theme) => ({
   root: {
     display: "flex",
-    backgroundColor: "white",
+    backgroundColor: "#ffffff",
   },
   appBar2: {
     width: `calc(100% - ${drawerWidth}px)`,
@@ -155,7 +159,7 @@ const groups = [
 const colorMap = {
   0: "#285285", // greyBlue
   1: "#ab4459", // roseRed
-  2: "green", 
+  2: "green",
   3: "#cf7908", // orange
   4: "#d1b64b", // sandYellow
   5: "#9055ad", // lightPurple
@@ -180,8 +184,7 @@ export const CalendarPage = () => {
    * To access events: userData.events,
    * To access groups: userData.groups
    */
-  const userData = useUserData();
-
+  const { userData } = useUserData();
   const theme = useTheme();
   const [open, setOpen] = React.useState(false);
   const [settings, setSettings] = React.useState(false); // this is react hook for brenden
@@ -278,7 +281,11 @@ export const CalendarPage = () => {
       >
         <Toolbar>
           <Typography variant="h6" noWrap className={classes.title}>
-            {settings ? "Settings" : "Calendar"}
+            {settings
+              ? "Settings"
+              : joinOrCreate
+              ? "Group Settings"
+              : "Calendar"}
           </Typography>
           <IconButton
             color="inherit"
@@ -302,19 +309,6 @@ export const CalendarPage = () => {
       >
         <div className={classes.toolbar2} />
         <Divider />
-        <Tooltip title="User Settings" arrow placement="right">
-          <Button
-            onClick={() => {
-              console.log(`i clicked on user settings`);
-              // setGroup("settings");
-              setSettings(true);
-              setJoinOrCreate(false);
-            }}
-          >
-            <HomeIcon fontSize="large" />
-          </Button>
-        </Tooltip>
-        <Divider />
         <List>
           {userData.groups.map((group) => (
             <Tooltip title={group.name} arrow placement="right">
@@ -331,6 +325,19 @@ export const CalendarPage = () => {
             </Tooltip>
           ))}
         </List>
+        <Divider />
+        <Tooltip title="User Settings" arrow placement="right">
+          <Button
+            onClick={() => {
+              console.log(`i clicked on user settings`);
+              // setGroup("settings");
+              setSettings(true);
+              setJoinOrCreate(false);
+            }}
+          >
+            <SettingsIcon fontSize="large" />
+          </Button>
+        </Tooltip>
         <Divider />
         <Tooltip title="Add New Group" arrow placement="right">
           <Button
@@ -353,34 +360,38 @@ export const CalendarPage = () => {
         <div className={classes.toolbar2} />
 
         <div>
-          <Grid container>
-            <Grid item xs={7}>
-              <Typography>Calendar</Typography>
+          {/* <Grid container>
+            <Grid item xs={5}>
+              <Typography> </Typography>
             </Grid>
-            <Grid item xs={5} direction="row">
-              {!settings && !joinOrCreate && (
-                <span>
-                  <FormControl variant="standard">
-                    <InputLabel htmlFor="filled-age-native-simple">
-                      Set View
-                    </InputLabel>
-                    <Select
-                      id="calViewSelect"
-                      value={calView}
-                      onChange={handleCalViewChange}
-                    >
-                      <MenuItem value={"timeGridWeek"}>Time Grid Week</MenuItem>
-                      <MenuItem value={"dayGridMonth"}>Day Grid Month</MenuItem>
-                      <MenuItem value={"dayGridWeek"}>Day Grid Week</MenuItem>
-                    </Select>
-                  </FormControl>
-                </span>
-              )}
-            </Grid>
-          </Grid>
+            <Grid item xs={5} direction="row"> */}
+          {!settings && !joinOrCreate && (
+            <span>
+              <FormControl variant="standard">
+                <InputLabel htmlFor="filled-age-native-simple">
+                  Set View
+                </InputLabel>
+                <Select
+                  id="calViewSelect"
+                  value={calView}
+                  onChange={handleCalViewChange}
+                >
+                  <MenuItem value={"timeGridWeek"}>Time Grid Week</MenuItem>
+                  <MenuItem value={"dayGridMonth"}>Day Grid Month</MenuItem>
+                  <MenuItem value={"dayGridWeek"}>Day Grid Week</MenuItem>
+                </Select>
+              </FormControl>
+            </span>
+          )}
+          {/* </Grid>
+          </Grid> */}
           {settings || joinOrCreate ? (
             settings ? (
-              <Settings />
+              <Settings
+                name={userData.name}
+                email={userData.email}
+                userAvatar={userData.picture}
+              />
             ) : (
               <GroupSettings />
             )
@@ -415,33 +426,13 @@ export const CalendarPage = () => {
             )}
           </IconButton>
         </div>
-        <Divider />
+        <Divider style={{ marginTop: 10 }} />
 
-        <Tooltip title="Show Invite Code" arrow placement="left">
-          <IconButton
-            color="inherit"
-            edge="end"
-            onClick={() => {
-              console.log("add a person lol");
-              console.log(groupID);
-            }}
-          >
-            <PersonAddIcon /> <Typography>Invite Member</Typography>
-          </IconButton>
-        </Tooltip>
-
-        {/* <Tooltip title="manage Group" arrow placement="left">
-          <IconButton
-            color="inherit"
-            edge="end"
-            onClick={() => {
-              console.log("manageGroup");
-            }}
-          >
-            <PeopleIcon /> <Typography>Manage Group</Typography>
-          </IconButton>
-        </Tooltip> */}
-
+        <InvitePopup
+          inviteId={groupID}
+          // onClick={copy({ groupID })}
+        />
+        <Divider style={{ marginBottom: 10 }} />
         <Divider />
         <List>
           {groupMembers.map((member, index) => (
@@ -461,16 +452,42 @@ export const CalendarPage = () => {
           ))}
         </List>
         <Divider />
-        <Grid container>
+        <List>
+          <ListItem>
+            <ListItemIcon>
+              <Avatar>
+                <img
+                  src={userData.picture}
+                  alt={userData.picture}
+                  width={40}
+                  height={40}
+                />
+              </Avatar>
+            </ListItemIcon>
+            <ListItemText
+              primary={
+                <span style={{ fontSize: 13, fontWeight: "bold" }}>
+                  {userData.name}
+                </span>
+              }
+            />
+            <Tooltip title="Logout" arrow placement="top">
+              <IconButton color="inherit" edge="end" onClick={handleLogout}>
+                <PowerSettingsNewIcon />
+              </IconButton>
+            </Tooltip>
+          </ListItem>
+        </List>
+
+        {/* <Grid container>
           <Grid item direction="row">
-            <Avatar alt="Remy Sharp" src="https://i.imgur.com/OKDYTzw.png" />
+            <Avatar alt={userData.picture} src={userData.picture} />
           </Grid>
           <Grid item direction="row">
             {" "}
-            <Typography>Name #1234</Typography>
+            <Typography>{userData.name}</Typography>
             <Grid item direction="row">
               {" "}
-              <SettingsIcon />{" "}
               <Tooltip title="Logout" arrow placement="top">
                 <IconButton color="inherit" edge="end" onClick={handleLogout}>
                   <PowerSettingsNewIcon />
@@ -478,7 +495,7 @@ export const CalendarPage = () => {
               </Tooltip>
             </Grid>
           </Grid>{" "}
-        </Grid>
+        </Grid> */}
       </Drawer>
     </div>
   );
